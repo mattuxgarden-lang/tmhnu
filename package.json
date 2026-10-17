@@ -1,20 +1,6 @@
 {
-  "name": "school-stall-educational-portal",
+  "name": "tmhnuvquizguider",
   "version": "2.0.0",
-  "description": "QuizGuider School Stall Exhibition Project by Thaswin Kaarthi.A, featuring T.M.H.N.U Vidhyalaya Matric Hr Sec School, Theni.",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
-  },
-  "keywords": [
-    "education",
-    "school-stall",
-    "tmhnu",
-    "vidhyalaya",
-    "quiz-portal",
-    "interactive-stem"
-  ],
-  "author": "Thaswin Kaarthi.A",
-  "license": "MIT"
+  "description": "QuizGuider Educational Ecosystem by Thaswin Kaarthi.A",
+  "private": true
 }

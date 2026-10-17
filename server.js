@@ -11,9 +11,13 @@ const UPLOADS_DIR = path.join(PUBLIC_DIR, 'uploads');
 const RESOURCES_FILE = path.join(DATA_DIR, 'resources.json');
 
 // Ensure database directories exist
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(USERS_DB_DIR)) fs.mkdirSync(USERS_DB_DIR, { recursive: true });
-if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+try {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (!fs.existsSync(USERS_DB_DIR)) fs.mkdirSync(USERS_DB_DIR, { recursive: true });
+  if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+} catch (e) {
+  console.warn("Storage directory init:", e.message);
+}
 
 function loadResources() {
   if (!fs.existsSync(RESOURCES_FILE)) return [];
@@ -530,12 +534,16 @@ const server = http.createServer(async (req, res) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`=======================================================`);
-  console.log(`🚀 School Stall Educational Platform Running on Port ${PORT}`);
-  console.log(`📍 Web URL: http://localhost:${PORT}`);
-  console.log(`🏫 Dedicated to T.M.H.N.U Vidhyalaya Mat Hr Sec School, Theni`);
-  console.log(`👨‍💻 Author & Lead Creator: Thaswin Kaarthi.A`);
-  console.log(`🗄️ Location: D:\\School Stall`);
-  console.log(`=======================================================`);
-});
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`=======================================================`);
+    console.log(`🚀 School Stall Educational Platform Running on Port ${PORT}`);
+    console.log(`📍 Web URL: http://localhost:${PORT}`);
+    console.log(`🏫 Dedicated to T.M.H.N.U Vidhyalaya Mat Hr Sec School, Theni`);
+    console.log(`👨‍💻 Author & Lead Creator: Thaswin Kaarthi.A`);
+    console.log(`🗄️ Location: D:\\School Stall`);
+    console.log(`=======================================================`);
+  });
+}
+
+module.exports = server;
