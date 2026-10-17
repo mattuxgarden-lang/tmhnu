@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizGuider — Next-Gen Interactive Learning & STEM Assessment Ecosystem</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  
+  <!-- Custom Platform Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="flex flex-col min-h-full">
+
+  <!-- Confetti Celebration Canvas -->
+  <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50 hidden"></canvas>
+
+  <!-- Live Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Primary Header & Navigation Bar -->
+  <header class="sticky top-0 z-40 glass-nav">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 sm:h-20 gap-4">
+        
+        <!-- Brand & Logo -->
+        <div class="flex items-center gap-3 cursor-pointer" onclick="App.switchTab('home')">
+          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white flex items-center justify-center text-xl sm:text-2xl shadow-md font-bold">
+            🎓
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-heading font-extrabold text-xl sm:text-2xl tracking-tight text-slate-900 dark:text-white">QuizGuider</span>
+              <span class="badge-tag bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">v2.0</span>
+            </div>
+            <p class="text-[10px] text-slate-400 font-medium hidden sm:block">Interactive Learning & Assessment Ecosystem</p>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="hidden md:flex items-center p-1.5 rounded-xl bg-slate-100/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 text-xs font-bold gap-1">
+          <button data-tab-target="home" class="nav-tab px-3.5 py-2 rounded-lg transition active bg-indigo-600 text-white">
+            🏠 Home
+          </button>
+          <button data-tab-target="courses" class="nav-tab px-3.5 py-2 rounded-lg transition text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800">
+            📚 Courses
+          </button>
+          <button data-tab-target="quiz" class="nav-tab px-3.5 py-2 rounded-lg transition text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800">
+            🎯 Assessments
+          </button>
+          <button data-tab-target="resources" class="nav-tab px-3.5 py-2 rounded-lg transition text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800">
+            📑 Resources
+          </button>
+          <button data-tab-target="doneby" class="nav-tab px-3.5 py-2 rounded-lg transition text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800">
+            🌟 Done By
+          </button>
+          <button data-tab-target="ourschool" class="nav-tab px-3.5 py-2 rounded-lg transition text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800">
+            🏫 Our School
+          </button>
+          <button id="nav-admin-tab" data-tab-target="admin" class="nav-tab px-3.5 py-2 rounded-lg transition hidden text-amber-600 dark:text-amber-400 hover:bg-amber-100/50">
+            🛡️ Admin Portal
+          </button>
+        </nav>
+
+        <!-- Right Side Controls & Authentication State -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          
+          <!-- Dark / Light Theme Toggle -->
+          <button id="theme-toggle-btn" onclick="App.toggleTheme()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 flex items-center justify-center text-base hover:border-indigo-400 transition shadow-sm" title="Toggle Light/Dark Theme">
+            <span id="theme-toggle-icon">🌙</span>
+          </button>
+
+          <!-- Guest Actions (Sign In / Sign Up / Admin) -->
+          <div id="navbar-auth-actions" class="flex items-center gap-1.5 sm:gap-2">
+            <button data-auth-action="open-login" class="px-3 sm:px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition">
+              Sign In
+            </button>
+            <button data-auth-action="open-register" class="px-3 sm:px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md transition">
+              Sign Up
+            </button>
+            <button data-auth-action="open-admin" class="hidden sm:inline-flex px-2.5 py-2 rounded-lg border border-amber-300 dark:border-amber-700/60 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-xs font-bold transition" title="Faculty & Administrator Console">
+              🛡️ Admin
+            </button>
+          </div>
+
+          <!-- Authenticated User Profile -->
+          <div id="navbar-user-profile" class="hidden items-center gap-2.5">
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60">
+              <span id="user-display-avatar" class="text-xl">🎓</span>
+              <div class="text-left hidden sm:block">
+                <p id="user-display-name" class="text-xs font-bold leading-tight">Student Scholar</p>
+                <p id="user-display-role" class="text-[10px] text-slate-400 leading-tight">Class 10</p>
+              </div>
+              <span id="admin-badge-indicator" class="hidden text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300">ADMIN</span>
+            </div>
+            <button data-auth-action="logout" class="p-2 sm:px-3 sm:py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-300 dark:hover:bg-rose-950/40 text-xs font-bold transition" title="Log Out">
+              <span class="hidden sm:inline">Logout</span>
+              <span class="sm:hidden">🚪</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Mobile Navigation Sub-Bar -->
+      <div class="flex md:hidden overflow-x-auto py-2.5 gap-1.5 border-t border-slate-200/80 dark:border-slate-800 text-xs font-bold">
+        <button data-tab-target="home" class="nav-tab px-3 py-1.5 rounded-lg active bg-indigo-600 text-white whitespace-nowrap">🏠 Home</button>
+        <button data-tab-target="courses" class="nav-tab px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 whitespace-nowrap">📚 Courses</button>
+        <button data-tab-target="quiz" class="nav-tab px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 whitespace-nowrap">🎯 Assessments</button>
+        <button data-tab-target="resources" class="nav-tab px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 whitespace-nowrap">📑 Resources</button>
+        <button data-tab-target="doneby" class="nav-tab px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 whitespace-nowrap">🌟 Done By</button>
+        <button data-tab-target="ourschool" class="nav-tab px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 whitespace-nowrap">🏫 Our School</button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Responsive Container -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: HOME (Ecosystem Showcase)          -->
+    <!-- ========================================== -->
+    <div id="tab-content-home" class="tab-view-content space-y-12">
+      
+      <!-- Hero Banner -->
+      <section class="glass-panel p-8 sm:p-12 md:p-16 shine-effect border-2 border-indigo-500/20 shadow-2xl relative overflow-hidden">
+        <div class="max-w-3xl space-y-6 relative z-10">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 text-xs font-bold shadow-sm">
+            <span>✨</span><span>Next-Generation Interactive Digital Learning</span>
+          </div>
+
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
+            Master STEM Concepts With <span class="text-gradient">Real-Time Labs</span> & Assessments.
+          </h1>
+
+          <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+            Welcome to <b>QuizGuider</b> — a modern educational ecosystem engineered for secondary & higher secondary scholars. Featuring hands-on physics simulators, live quadratic solvers, a pure real-time honor roll, and dedicated isolated user cloud databases.
+          </p>
+
+          <div class="flex flex-wrap items-center gap-3 pt-2">
+            <button onclick="App.switchTab('courses')" class="px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-xl transition flex items-center gap-2">
+              <span>🚀 Explore Courses</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+            <button onclick="App.switchTab('quiz')" class="px-6 py-3.5 rounded-xl border border-indigo-600 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-400 dark:hover:bg-indigo-950/40 font-bold text-sm transition flex items-center gap-2">
+              <span>🎯 Take Assessment</span>
+            </button>
+            <button onclick="App.switchTab('doneby')" class="px-6 py-3.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm transition flex items-center gap-2">
+              <span>🌟 Meet the Author</span>
+            </button>
+            <button onclick="App.switchTab('ourschool')" class="px-6 py-3.5 rounded-xl border border-cyan-400 text-cyan-700 dark:border-cyan-600 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 font-bold text-sm transition flex items-center gap-2">
+              <span>🏫 Our School</span>
+            </button>
+          </div>
+
+          <!-- Feature Highlights Badges -->
+          <div class="pt-6 border-t border-slate-200/80 dark:border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-medium text-slate-500 dark:text-slate-400">
+            <div class="flex items-center gap-2">
+              <span class="text-indigo-500 font-bold">✓</span>
+              <span>Isolated Per-User DB</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-indigo-500 font-bold">✓</span>
+              <span>Zero Mock Honor Roll</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-indigo-500 font-bold">✓</span>
+              <span>STEM Visual Labs</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-indigo-500 font-bold">✓</span>
+              <span>Cloud Sync Ready</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Interactive Simulators Quick Launch Cards -->
+      <section class="space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight">⚡ Interactive STEM Simulation Labs</h2>
+            <p class="text-xs text-slate-500">Run physics formulas and algorithmic computations directly in your browser.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <div class="glass-panel p-6 flex flex-col justify-between hover:border-indigo-500 transition-all duration-300 group">
+            <div>
+              <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                📐
+              </div>
+              <h3 class="text-lg font-bold mb-1">Quadratic Root Solver</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Input coefficients a, b, c to dynamically compute real or complex roots via the discriminant.</p>
+            </div>
+            <button onclick="App.launchInteractiveTool('quadratic-calc')" class="w-full py-2.5 px-4 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-600 hover:text-white dark:bg-indigo-950/60 dark:text-indigo-300 font-bold text-xs rounded-lg transition">
+              Launch Solver Lab ↗
+            </button>
+          </div>
+
+          <div class="glass-panel p-6 flex flex-col justify-between hover:border-cyan-500 transition-all duration-300 group">
+            <div>
+              <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                ⚡
+              </div>
+              <h3 class="text-lg font-bold mb-1">Ohm's Law Circuit Sim</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Simulate electrical potential V = I × R and dissipated power wattage across circuit resistance.</p>
+            </div>
+            <button onclick="App.launchInteractiveTool('ohms-sim')" class="w-full py-2.5 px-4 bg-cyan-600/10 hover:bg-cyan-600 text-cyan-600 hover:text-white dark:bg-cyan-950/60 dark:text-cyan-300 font-bold text-xs rounded-lg transition">
+              Launch Circuit Lab ↗
+            </button>
+          </div>
+
+          <div class="glass-panel p-6 flex flex-col justify-between hover:border-emerald-500 transition-all duration-300 group">
+            <div>
+              <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                💻
+              </div>
+              <h3 class="text-lg font-bold mb-1">Code & Algorithm Sandbox</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Write, run, and benchmark JavaScript & Python algorithmic scripts with live console telemetry.</p>
+            </div>
+            <button onclick="App.launchInteractiveTool('code-sandbox')" class="w-full py-2.5 px-4 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-600 hover:text-white dark:bg-emerald-950/60 dark:text-emerald-300 font-bold text-xs rounded-lg transition">
+              Launch Code Sandbox ↗
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Platform Notices & Announcements -->
+      <section class="space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold tracking-tight">📢 Official Platform Bulletins</h2>
+            <p class="text-xs text-slate-500">Academic announcements, timetable schedules, and curriculum updates.</p>
+          </div>
+        </div>
+
+        <div id="platform-announcements-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Dynamically populated by App.renderAnnouncements() -->
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: COURSES                            -->
+    <!-- ========================================== -->
+    <div id="tab-content-courses" class="tab-view-content hidden space-y-8">
+      <div>
+        <span class="badge-tag bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 mb-2">Curriculum Modules</span>
+        <h2 class="text-3xl font-extrabold tracking-tight">Structured Secondary & Hr. Sec. Syllabus</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Deep-dive into foundational modules in Mathematics, Physics, Chemistry, and Computer Science.</p>
+      </div>
+
+      <div id="courses-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Dynamically populated by App.renderCourses() -->
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: ASSESSMENTS & LIVE HONOR ROLL      -->
+    <!-- ========================================== -->
+    <div id="tab-content-quiz" class="tab-view-content hidden space-y-12">
+      
+      <!-- SUB-VIEW 1: LOBBY -->
+      <div id="quiz-view-lobby" class="space-y-12">
+        
+        <!-- Interactive Flashcards Deck -->
+        <section class="glass-panel p-6 sm:p-8 space-y-6 border border-slate-200 dark:border-slate-800">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <span class="badge-tag bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 mb-1">Concept Booster</span>
+              <h3 class="text-xl font-bold">Interactive STEM Flashcard Deck</h3>
+            </div>
+            <p class="text-xs text-slate-400">Click card to reveal formula & explanations</p>
+          </div>
+
+          <div class="perspective-1000 max-w-xl mx-auto h-64 cursor-pointer" onclick="QuizEngine.toggleFlashcardFlip()">
+            <div id="active-flashcard-element" class="flip-card w-full h-full">
+              <div class="flip-card-inner">
+                <!-- Front Side -->
+                <div class="flip-card-front glass-panel p-6 sm:p-8 flex flex-col justify-between border-2 border-indigo-400/40">
+                  <div class="flex items-center justify-between">
+                    <span id="flashcard-subject" class="badge-tag bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">Physics</span>
+                    <span class="text-xs text-slate-400 font-mono">Tap Card to Flip 🔄</span>
+                  </div>
+                  <p id="flashcard-question" class="text-base sm:text-lg font-bold text-center px-4 my-auto">
+                    Loading Concept...
+                  </p>
+                  <div class="text-[11px] text-slate-400 text-center">Click anywhere to check the answer</div>
+                </div>
+                <!-- Back Side -->
+                <div class="flip-card-back glass-panel p-6 sm:p-8 flex flex-col justify-between bg-gradient-to-tr from-indigo-700 to-cyan-600 text-white border-2 border-white/20">
+                  <div class="flex items-center justify-between">
+                    <span class="badge-tag bg-white/20 text-white">Answer & Scientific Core</span>
+                    <span class="text-xs text-indigo-100 font-mono">Tap Card to Flip Back 🔄</span>
+                  </div>
+                  <p id="flashcard-answer" class="text-sm sm:text-base font-medium text-center leading-relaxed px-4 my-auto text-indigo-50">
+                    Loading Answer...
+                  </p>
+                  <div class="text-[11px] text-indigo-200 text-center">Mastered this concept? Keep testing your memory!</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="flex items-center justify-center gap-4">
+            <button onclick="QuizEngine.prevFlashcard()" class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition flex items-center gap-1">
+              <span>◀</span><span>Previous Card</span>
+            </button>
+            <span id="flashcard-counter" class="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">1 / 5</span>
+            <button onclick="QuizEngine.nextFlashcard()" class="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition flex items-center gap-1">
+              <span>Next Card</span><span>▶</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Quizzes Grid -->
+        <section class="space-y-6">
+          <div>
+            <span class="badge-tag bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 mb-2">Timed Challenges</span>
+            <h2 class="text-3xl font-extrabold tracking-tight">Curriculum Assessment Modules</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Solve real examination-grade questions under timed constraints. Your scores save directly to your database partition.</p>
+          </div>
+
+          <div id="quiz-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dynamically populated by QuizEngine.renderQuizList() -->
+          </div>
+        </section>
+
+        <!-- Pure Live Honor Roll -->
+        <section class="glass-panel p-8 space-y-6 border border-slate-200 dark:border-slate-800">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-bold mb-1">
+                <span>🏆</span><span>Pure Live Tracking</span>
+              </div>
+              <h3 class="text-2xl font-extrabold tracking-tight">Live Academic Honor Roll</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Zero mock records. Updated instantaneously whenever real scholars complete assessments.</p>
+            </div>
+            <button onclick="QuizEngine.renderLeaderboard()" class="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold transition flex items-center gap-1.5 self-start sm:self-auto">
+              <span>🔄 Refresh Live Rankings</span>
+            </button>
+          </div>
+
+          <div id="leaderboard-rankings-list" class="space-y-3">
+            <!-- Dynamically populated by QuizEngine.renderLeaderboard() -->
+          </div>
+        </section>
+
+      </div>
+
+      <!-- SUB-VIEW 2: ACTIVE QUIZ RUNNER -->
+      <div id="quiz-view-active" class="hidden glass-panel p-6 sm:p-10 max-w-3xl mx-auto space-y-8 shadow-2xl border-2 border-indigo-500/30">
+        
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+          <div>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Assessment</span>
+            <h3 id="active-quiz-title" class="text-xl font-extrabold">Assessment Title</h3>
+          </div>
+          <div class="text-right">
+            <span class="text-xs text-slate-400 block font-semibold">Time Remaining</span>
+            <div id="quiz-timer-display" class="font-mono text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">
+              10:00
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Tracker -->
+        <div>
+          <div class="flex items-center justify-between text-xs font-bold text-slate-400 mb-2">
+            <span>Question <span id="active-quiz-current-num">1</span> of <span id="active-quiz-total-q">5</span></span>
+            <span class="text-indigo-600 dark:text-indigo-400">Progress</span>
+          </div>
+          <div class="w-full bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
+            <div id="active-quiz-progress-bar" class="bg-indigo-600 h-full transition-all duration-300" style="width: 20%;"></div>
+          </div>
+        </div>
+
+        <!-- Question Prompt -->
+        <div>
+          <h4 id="active-question-text" class="text-lg sm:text-xl font-bold leading-relaxed mb-6">
+            Loading Question Prompt...
+          </h4>
+          <div id="active-question-options" class="space-y-3">
+            <!-- Dynamically populated by QuizEngine.renderCurrentQuestion() -->
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800">
+          <button id="quiz-btn-prev" onclick="QuizEngine.prevQuestion()" class="px-5 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-bold text-xs transition disabled:opacity-40 disabled:cursor-not-allowed">
+            ◀ Previous
+          </button>
+          
+          <div class="flex items-center gap-3">
+            <button onclick="QuizEngine.exitQuiz()" class="px-4 py-2.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg text-xs font-bold transition">
+              Cancel & Exit
+            </button>
+            <button id="quiz-btn-next" onclick="QuizEngine.nextQuestion()" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg shadow transition">
+              Next Question ▶
+            </button>
+            <button id="quiz-btn-submit" onclick="QuizEngine.submitQuiz()" class="hidden px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-lg transition">
+              Submit Assessment ✓
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SUB-VIEW 3: QUIZ RESULTS & DETAILED REVIEW -->
+      <div id="quiz-view-results" class="hidden glass-panel p-6 sm:p-10 max-w-3xl mx-auto space-y-8 shadow-2xl border-2 border-indigo-500/30">
+        
+        <div class="text-center space-y-3">
+          <span id="results-status-badge" class="badge-tag bg-emerald-100 text-emerald-800">PASSED</span>
+          <h3 class="text-3xl font-extrabold tracking-tight">Assessment Completed</h3>
+          <p class="text-xs text-slate-500">Your score has been registered in your unique database and the Live Honor Roll!</p>
+        </div>
+
+        <div class="flex items-center justify-center gap-8 py-6 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+          <div class="text-center">
+            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Overall Percentage</span>
+            <div id="results-score-percent" class="text-5xl font-black text-indigo-600 dark:text-indigo-400">80%</div>
+          </div>
+          <div class="h-12 w-px bg-slate-200 dark:bg-slate-800"></div>
+          <div class="text-center">
+            <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Accuracy</span>
+            <div id="results-correct-tally" class="text-lg font-bold text-slate-700 dark:text-slate-300">4 of 5 Correct</div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <h4 class="font-bold text-base">Comprehensive Answers & Solutions Review</h4>
+          <div id="results-explanations-list" class="space-y-3">
+            <!-- Dynamically populated by QuizEngine.submitQuiz() -->
+          </div>
+        </div>
+
+        <div class="pt-4 text-center">
+          <button onclick="QuizEngine.exitQuiz()" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg transition">
+            Return to Assessment Lobby
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: RESOURCES                          -->
+    <!-- ========================================== -->
+    <div id="tab-content-resources" class="tab-view-content hidden space-y-8">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span class="badge-tag bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 mb-2">Study Materials</span>
+          <h2 class="text-3xl font-extrabold tracking-tight">Academic Resource Library</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400">Download high-yield formula sheets, past examination question banks, and programming primers.</p>
+        </div>
+
+        <!-- Subject Filters -->
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <button onclick="App.renderResources('all')" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold">All</button>
+          <button onclick="App.renderResources('Mathematics')" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold">Mathematics</button>
+          <button onclick="App.renderResources('Physics')" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold">Physics</button>
+          <button onclick="App.renderResources('Chemistry')" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold">Chemistry</button>
+          <button onclick="App.renderResources('Biology')" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold">Biology</button>
+          <button onclick="App.renderResources('Computer Science')" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold">Computer Science</button>
+        </div>
+      </div>
+
+      <div id="resources-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Dynamically populated by App.renderResources() -->
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 5: DONE BY (Author Profile)           -->
+    <!-- ========================================== -->
+    <div id="tab-content-doneby" class="tab-view-content hidden space-y-10">
+      <div>
+        <span class="badge-tag bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 mb-2">Platform Creator & Architect</span>
+        <h2 class="text-3xl font-extrabold tracking-tight">Done By — Thaswin Kaarthi.A</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          Sole Developer, Lead Architect & STEM Innovator who engineered the entire <b>QuizGuider</b> learning ecosystem.
+        </p>
+      </div>
+
+      <!-- Author Card Section -->
+      <div id="doneby-author-container">
+        <!-- Dynamically populated by App.renderDoneBy() -->
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 6: OUR SCHOOL (TMHNU Vidhyalaya)       -->
+    <!-- ========================================== -->
+    <div id="tab-content-ourschool" class="tab-view-content hidden space-y-10">
+      <div>
+        <span class="badge-tag bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300 mb-2">Institutional Showcase</span>
+        <h2 class="text-3xl font-extrabold tracking-tight">Our School — T.M.H.N.U. Vidhyalaya</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          Official institutional documentation, history, leadership, timings, and campus facilities extracted from the school diary archives.
+        </p>
+      </div>
+
+      <!-- School Diary Presentation Section -->
+      <div id="ourschool-container">
+        <!-- Dynamically populated by App.renderOurSchool() -->
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 6: ADMIN PORTAL                       -->
+    <!-- ========================================== -->
+    <div id="tab-content-admin" class="tab-view-content hidden">
+      <div id="admin-content-view">
+        <!-- Dynamically populated by AdminPortal.renderAdminDashboard() -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="border-t border-slate-200/80 dark:border-slate-800 mt-16 py-8 text-xs text-slate-500 dark:text-slate-400">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-slate-800 dark:text-slate-200">QuizGuider Platform</span>
+        <span>•</span>
+        <span>Crafted by <b>Thaswin Kaarthi.A</b></span>
+      </div>
+      <div>
+        Dedicated to <b>T.M.H.N.U. Vidhyalaya Mat. Hr. Sec. School, Theni</b>
+      </div>
+      <div class="text-[11px] text-slate-400">
+        Standalone Architecture • Zero Mock Records • Isolated User Partitions
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================== -->
+  <!-- MODALS                                     -->
+  <!-- ========================================== -->
+
+  <!-- Modal: Student Sign In -->
+  <div id="modal-login" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden">
+    <div class="glass-panel p-6 sm:p-8 max-w-md w-full relative shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
+      <button onclick="App.closeModal('modal-login')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold">✕</button>
+      
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center mx-auto text-2xl mb-2">🎓</div>
+        <h3 class="text-xl font-bold">Sign In to Your Scholar Account</h3>
+        <p class="text-xs text-slate-400">Access your individual database and real-time assessment history.</p>
+      </div>
+
+      <form onsubmit="event.preventDefault(); handleLoginSubmit();" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
+          <input id="login-email" type="email" required placeholder="scholar@example.com" class="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Password</label>
+          <input id="login-password" type="password" required placeholder="••••••••" class="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow transition">
+          Sign In
+        </button>
+      </form>
+
+      <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500">
+        Don't have an account? 
+        <button onclick="App.closeModal('modal-login'); App.openModal('modal-register')" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">
+          Create Account
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Student Sign Up (Register) -->
+  <div id="modal-register" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden">
+    <div class="glass-panel p-6 sm:p-8 max-w-md w-full relative shadow-2xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
+      <button onclick="App.closeModal('modal-register')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold">✕</button>
+      
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center mx-auto text-2xl mb-2">✨</div>
+        <h3 class="text-xl font-bold">Create Your Student Account</h3>
+        <p class="text-xs text-slate-400">Instantly provisions an isolated database partition for your learning path.</p>
+      </div>
+
+      <form onsubmit="event.preventDefault(); handleRegisterSubmit();" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Full Student Name</label>
+          <input id="reg-name" type="text" required placeholder="e.g. Arun Kumar" class="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
+          <input id="reg-email" type="email" required placeholder="student@example.com" class="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Standard / Class</label>
+          <select id="reg-grade" class="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-indigo-500">
+            <option value="Class 9">Class 9 (Secondary)</option>
+            <option value="Class 10" selected>Class 10 (SSLC)</option>
+            <option value="Class 11 - Computer Science">Class 11 - Computer Science</option>
+            <option value="Class 11 - Biology / Maths">Class 11 - Biology / Maths</option>
+            <option value="Class 12 - Computer Science">Class 12 - Computer Science</option>
+            <option value="Class 12 - Biology / Maths">Class 12 - Biology / Maths</option>
+            <option value="Undergraduate STEM">Undergraduate STEM</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Password</label>
+          <input id="reg-password" type="password" required placeholder="Minimum 4 characters" class="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow transition">
+          Create Account & Partition
+        </button>
+      </form>
+
+      <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500">
+        Already registered? 
+        <button onclick="App.closeModal('modal-register'); App.openModal('modal-login')" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">
+          Sign In
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Admin & Faculty Sign In -->
+  <div id="modal-admin-login" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden">
+    <div class="glass-panel p-6 sm:p-8 max-w-md w-full relative shadow-2xl border-2 border-amber-500/40 animate-in fade-in zoom-in-95 duration-200">
+      <button onclick="App.closeModal('modal-admin-login')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold">✕</button>
+      
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto text-2xl mb-2">🛡️</div>
+        <h3 class="text-xl font-bold">Faculty & Administrator Gateway</h3>
+        <p class="text-xs text-slate-400">Elevated privileges to author assessments, publish notices, and manage partitions.</p>
+      </div>
+
+      <form onsubmit="event.preventDefault(); handleAdminLoginSubmit();" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Admin Email</label>
+          <input id="admin-login-email" type="email" required value="admin@quizguider.io" class="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-amber-500">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Admin Key / Password</label>
+          <input id="admin-login-password" type="password" required value="admin" class="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-amber-500">
+        </div>
+
+        <button type="submit" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow transition">
+          Unlock Administrator Portal
+        </button>
+      </form>
+
+      <div class="mt-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/60 text-[11px] text-amber-800 dark:text-amber-300">
+        Default Demo Credentials: <span class="font-mono font-bold">admin@quizguider.io</span> / <span class="font-mono font-bold">admin</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Course Lessons Viewer -->
+  <div id="modal-course-viewer" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden">
+    <div class="glass-panel p-6 sm:p-8 max-w-2xl w-full max-h-[85vh] overflow-y-auto relative shadow-2xl border border-slate-200 dark:border-slate-800">
+      <button onclick="App.closeModal('modal-course-viewer')" class="sticky top-0 float-right text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold bg-white/80 dark:bg-slate-800/80 p-1.5 rounded-full z-20">✕</button>
+      
+      <div class="mb-6">
+        <span class="badge-tag bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 mb-2">Curriculum Explorer</span>
+        <h3 id="course-modal-title" class="text-2xl font-extrabold tracking-tight">Course Title</h3>
+        <p id="course-modal-desc" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Course summary details</p>
+      </div>
+
+      <div id="course-modal-lessons" class="space-y-4">
+        <!-- Dynamically populated by App.openCourseLessons() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Interactive Simulator Tool -->
+  <div id="modal-interactive-tool" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden">
+    <div class="glass-panel p-6 sm:p-8 max-w-xl w-full relative shadow-2xl border border-slate-200 dark:border-slate-800">
+      <button onclick="App.closeModal('modal-interactive-tool')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold">✕</button>
+      
+      <div class="mb-6">
+        <h3 id="tool-modal-title" class="text-xl font-extrabold flex items-center gap-2">
+          ⚡ Interactive Lab
+        </h3>
+      </div>
+
+      <div id="tool-modal-content">
+        <!-- Dynamically injected by App.launchInteractiveTool() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Admin Create Assessment -->
+  <div id="modal-create-quiz" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden">
+    <div class="glass-panel p-6 sm:p-8 max-w-xl w-full max-h-[85vh] overflow-y-auto relative shadow-2xl border border-slate-200 dark:border-slate-800">
+      <button onclick="App.closeModal('modal-create-quiz')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold">✕</button>
+      
+      <div class="mb-4">
+        <h3 class="text-xl font-extrabold flex items-center gap-2">
+          <span>➕</span><span>Author New Assessment Module</span>
+        </h3>
+        <p class="text-xs text-slate-400">Add custom questions for testing student comprehension.</p>
+      </div>
+
+      <form onsubmit="event.preventDefault(); handleCreateQuizSubmit();" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold mb-1">Assessment Title</label>
+          <input id="new-quiz-title" type="text" required placeholder="e.g. Kinematics & Laws of Motion Test" class="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold mb-1">Subject / Category</label>
+            <input id="new-quiz-category" type="text" required value="Physics" class="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm">
+          </div>
+          <div>
+            <label class="block font-bold mb-1">Time Limit (Minutes)</label>
+            <input id="new-quiz-time" type="number" required value="10" min="1" max="180" class="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold mb-1">Question 1 Prompt</label>
+          <input id="new-q-text" type="text" required placeholder="What is the unit of force in SI system?" class="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <input id="new-q-opt0" type="text" required placeholder="Option A (e.g. Joule)" class="p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+          <input id="new-q-opt1" type="text" required placeholder="Option B (e.g. Newton)" class="p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+          <input id="new-q-opt2" type="text" required placeholder="Option C (e.g. Pascal)" class="p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+          <input id="new-q-opt3" type="text" required placeholder="Option D (e.g. Watt)" class="p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold mb-1">Correct Option</label>
+            <select id="new-q-correct" class="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <option value="0">Option A</option>
+              <option value="1" selected>Option B</option>
+              <option value="2">Option C</option>
+              <option value="3">Option D</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold mb-1">Passing Score (%)</label>
+            <input id="new-quiz-pass" type="number" value="70" class="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold mb-1">Solution Explanation</label>
+          <textarea id="new-q-explanation" rows="2" placeholder="Explain why the option is correct..." class="w-full p-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"></textarea>
+        </div>
+
+        <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow transition">
+          Save & Publish Assessment
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Inline Form Handlers -->
+  <script>
+    async function handleLoginSubmit() {
+      const email = document.getElementById('login-email').value;
+      const pass = document.getElementById('login-password').value;
+      try {
+        await window.Auth.login(email, pass);
+        window.App.closeModal('modal-login');
+        window.App.showToast("Welcome back! Your unique database is synchronized.");
+      } catch (err) {
+        window.App.showToast(err.message || "Invalid credentials", "error");
+      }
+    }
+
+    async function handleRegisterSubmit() {
+      const name = document.getElementById('reg-name').value;
+      const email = document.getElementById('reg-email').value;
+      const grade = document.getElementById('reg-grade').value;
+      const pass = document.getElementById('reg-password').value;
+
+      try {
+        await window.Auth.register(name, email, pass, grade);
+        window.App.closeModal('modal-register');
+        window.App.showToast("Account & partition created successfully!");
+        window.App.triggerConfetti();
+      } catch (err) {
+        window.App.showToast(err.message || "Registration failed", "error");
+      }
+    }
+
+    async function handleAdminLoginSubmit() {
+      const email = document.getElementById('admin-login-email').value;
+      const pass = document.getElementById('admin-login-password').value;
+      try {
+        await window.Auth.adminLogin(email, pass);
+        window.App.closeModal('modal-admin-login');
+        window.App.showToast("Admin authenticated! Systems console unlocked.");
+        window.App.switchTab('admin');
+      } catch (err) {
+        window.App.showToast(err.message || "Admin authorization rejected", "error");
+      }
+    }
+
+    function handleCreateQuizSubmit() {
+      const title = document.getElementById('new-quiz-title').value;
+      const category = document.getElementById('new-quiz-category').value;
+      const time = document.getElementById('new-quiz-time').value;
+      const pass = document.getElementById('new-quiz-pass').value;
+      
+      const qText = document.getElementById('new-q-text').value;
+      const opts = [
+        document.getElementById('new-q-opt0').value,
+        document.getElementById('new-q-opt1').value,
+        document.getElementById('new-q-opt2').value,
+        document.getElementById('new-q-opt3').value
+      ];
+      const correctIdx = parseInt(document.getElementById('new-q-correct').value, 10);
+      const expl = document.getElementById('new-q-explanation').value || "No detailed explanation provided.";
+
+      const questions = [{
+        id: 'q_' + Date.now(),
+        text: qText,
+        options: opts,
+        correctIndex: correctIdx,
+        explanation: expl
+      }];
+
+      window.AdminPortal.createQuiz(title, category, time, pass, questions);
+      window.App.closeModal('modal-create-quiz');
+    }
+  </script>
+
+  <!-- Modular Scripts Architecture -->
+  <script src="js/data.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
